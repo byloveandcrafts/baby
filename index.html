@@ -763,23 +763,6 @@ select option{background:var(--navy);color:white}
   }
 
   function doGet(e) {
-    var action = e && e.parameter && e.parameter.action;
-    if (action === "wishes") {
-      var ss = SpreadsheetApp.getActiveSpreadsheet();
-      var sheet = ss.getSheetByName("Wishes");
-      if (!sheet || sheet.getLastRow() < 2) {
-        return ContentService
-          .createTextOutput(JSON.stringify({ status: "ok", wishes: [] }))
-          .setMimeType(ContentService.MimeType.JSON);
-      }
-      var rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 3).getValues();
-      var wishes = rows.reverse().map(function(r) {
-        return { timestamp: r[0], name: r[1], text: r[2] };
-      }).filter(function(w){ return w.name && w.text; });
-      return ContentService
-        .createTextOutput(JSON.stringify({ status: "ok", wishes: wishes }))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
     return ContentService
       .createTextOutput(JSON.stringify({ status: "alive" }))
       .setMimeType(ContentService.MimeType.JSON);
@@ -797,13 +780,13 @@ select option{background:var(--navy);color:white}
 
   STEP 4 — Paste URL
   ────────────────────
-  Paste the URL below as: const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbx6vENDf7TDeQ0gC344NXoDCSv0sUZJZQ4QAFlc4BwjJjF3ixIShMU2mYinDiOVOFAR/exec';
+  Paste the URL below as: const SHEETS_URL = 'https://script.google.com/...';
 
 ══════════════════════════════════════════════════ -->
 
 <script>
 // ── PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE ──
-const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbx6vENDf7TDeQ0gC344NXoDCSv0sUZJZQ4QAFlc4BwjJjF3ixIShMU2mYinDiOVOFAR/exec';
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbx6vENDf7TDeQ0gC344NXoDCSv0sUZJZQ4QAFlc4BwjJjF3ixIShMU2mYinDiOVOFAR/exec'; // e.g. 'https://script.google.com/macros/s/ABC.../exec'
 
 /* ── CURSOR ── */
 const cur=document.getElementById('cur'),cdot=document.getElementById('cdot');
@@ -990,76 +973,43 @@ const msgs=['🎉 Lady Luck is on your side — you\'re going to WIN!','🌟 The
 function drawRaffle(){const r=document.getElementById('raffleRes');r.classList.remove('pop');r.textContent='';setTimeout(()=>{r.textContent=msgs[Math.floor(Math.random()*msgs.length)];r.classList.add('pop');},50);}
 
 /* ── WISH WALL WITH GOOGLE SHEETS ── */
-/* ── WISH WALL — Sheets-synced ── */
+const defWishes=[
+  
+];
 let wishes=[];
-function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-
-function renderWishes(list){
-  wishes=list;
+try{const s=localStorage.getItem('jd_bsw3');wishes=s?JSON.parse(s):[...defWishes];}catch(e){wishes=[...defWishes];}
+function renderWishes(){
   const g=document.getElementById('wishGrid');
   if(!wishes.length){g.innerHTML='<p class="no-wish">Be the first to leave a wish! 💌</p>';return;}
   g.innerHTML=wishes.map(w=>`<div class="wcard"><p class="wauthor">${esc(w.name)}</p><p class="wtext">${esc(w.text)}</p></div>`).join('');
 }
-
-function loadWishesFromSheets(){
-  if(!SHEETS_URL||SHEETS_URL.includes('...')) return;
-  fetch(SHEETS_URL+'?action=wishes',{method:'GET'})
-    .then(r=>r.json())
-    .then(d=>{
-      if(d.status==='ok'&&Array.isArray(d.wishes)){
-        renderWishes(d.wishes);
-        try{localStorage.setItem('jd_bsw3',JSON.stringify(d.wishes.slice(0,80)));}catch(e){}
-      }
-    })
-    .catch(()=>{
-      // fallback to localStorage
-      try{const s=localStorage.getItem('jd_bsw3');if(s)renderWishes(JSON.parse(s));}catch(e){}
-    });
-}
-
-// Initial load — try Sheets first, fallback to localStorage
-(()=>{
-  try{const s=localStorage.getItem('jd_bsw3');if(s)renderWishes(JSON.parse(s));}catch(e){}
-  loadWishesFromSheets();
-  // Refresh every 30 seconds so all devices stay in sync
-  setInterval(loadWishesFromSheets, 30000);
-})();
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+renderWishes();
 
 function addWish(){
   const n=document.getElementById('wishName').value.trim(),t=document.getElementById('wishText').value.trim();
   const st=document.getElementById('wishStatus');
   if(!n||!t){st.className='wish-status err';st.textContent='⚠️ Please enter your name and wish!';st.style.display='block';setTimeout(()=>st.style.display='none',2500);return;}
 
-  // Optimistic local render immediately
-  const newWish={name:n,text:t};
-  renderWishes([newWish,...wishes]);
+  // Save locally immediately
+  wishes.unshift({name:n,text:t});
+  try{localStorage.setItem('jd_bsw3',JSON.stringify(wishes.slice(0,60)));}catch(e){}
+  renderWishes();
   document.getElementById('wishName').value='';
   document.getElementById('wishText').value='';
-  document.getElementById('wishGrid').firstChild?.scrollIntoView({behavior:'smooth',block:'nearest'});
 
-  if(SHEETS_URL&&!SHEETS_URL.includes('...')){
+  // Send to Google Sheets if URL set
+  if(SHEETS_URL){
     st.className='wish-status ok';st.textContent='✨ Sending your wish…';st.style.display='block';
     fetch(SHEETS_URL,{method:'POST',body:JSON.stringify({type:'wish',name:n,wish:t}),headers:{'Content-Type':'text/plain'}})
       .then(r=>r.json())
-      .then(d=>{
-        if(d.status==='ok'){
-          st.textContent='💙 Wish received! Thank you!';
-          setTimeout(()=>{st.style.display='none';loadWishesFromSheets();},2000);
-        } else {
-          st.className='wish-status err';st.textContent='⚠️ Could not save. Try again.';
-          setTimeout(()=>st.style.display='none',3000);
-        }
-      })
-      .catch(()=>{
-        st.className='wish-status err';st.textContent='📶 Offline — wish saved locally.';
-        try{localStorage.setItem('jd_bsw3',JSON.stringify(wishes.slice(0,80)));}catch(e){}
-        setTimeout(()=>st.style.display='none',3000);
-      });
+      .then(()=>{st.textContent='💙 Wish received! Thank you!';setTimeout(()=>st.style.display='none',2500);})
+      .catch(()=>{st.className='wish-status err';st.textContent='Saved locally (offline mode)';setTimeout(()=>st.style.display='none',2500);});
   } else {
-    st.className='wish-status ok';st.textContent='💙 Wish added!';st.style.display='block';
+    st.className='wish-status ok';st.textContent='💙 Wish added! Thank you!';st.style.display='block';
     setTimeout(()=>st.style.display='none',2200);
   }
-}
+  document.getElementById('wishGrid').firstChild?.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
 /* ── CONFETTI ── */
