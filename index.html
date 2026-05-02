@@ -316,33 +316,103 @@ select option{background:var(--navy);color:white}
 <!-- ═ REDESIGNED MOON — crescent shape, elegant, no face ═ -->
 <symbol id="sym-moon" viewBox="0 0 200 200">
   <defs>
-    <radialGradient id="mg1" cx="30%" cy="25%"><stop offset="0%" stop-color="#fffdf0"/><stop offset="40%" stop-color="#fef0a0"/><stop offset="100%" stop-color="#d8a020"/></radialGradient>
-    <radialGradient id="mg2" cx="50%" cy="50%"><stop offset="0%" stop-color="#fffbe0" stop-opacity=".6"/><stop offset="100%" stop-color="transparent"/></radialGradient>
-    <filter id="mgl" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="8" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    <!-- 3D sphere base: lit from top-left -->
+    <radialGradient id="mg-sphere" cx="35%" cy="28%" r="65%">
+      <stop offset="0%"   stop-color="#fffef5"/>
+      <stop offset="18%"  stop-color="#fef8c0"/>
+      <stop offset="45%"  stop-color="#f5d840"/>
+      <stop offset="72%"  stop-color="#c8920a"/>
+      <stop offset="100%" stop-color="#7a5000"/>
+    </radialGradient>
+    <!-- terminator shadow (dark side) -->
+    <radialGradient id="mg-shadow" cx="78%" cy="62%" r="55%">
+      <stop offset="0%"   stop-color="#2a1800" stop-opacity=".85"/>
+      <stop offset="55%"  stop-color="#2a1800" stop-opacity=".4"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    <!-- soft rim light on dark edge -->
+    <radialGradient id="mg-rim" cx="88%" cy="55%" r="35%">
+      <stop offset="0%"   stop-color="#4aaae0" stop-opacity=".28"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    <!-- specular hotspot -->
+    <radialGradient id="mg-spec" cx="30%" cy="22%" r="28%">
+      <stop offset="0%"   stop-color="white" stop-opacity=".65"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    <!-- atmosphere glow -->
+    <radialGradient id="mg-atm" cx="50%" cy="50%" r="52%">
+      <stop offset="78%"  stop-color="transparent"/>
+      <stop offset="88%"  stop-color="rgba(252,220,80,.18)"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    <!-- outer halo blur -->
+    <filter id="mhalo" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="16"/>
     </filter>
-    <filter id="mhalo" x="-40%" y="-40%" width="180%" height="180%">
-      <feGaussianBlur stdDeviation="14"/>
+    <!-- crater shadow -->
+    <filter id="mcrat" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2.5"/>
     </filter>
+    <!-- overall soft glow on moon -->
+    <filter id="msoft" x="-15%" y="-15%" width="130%" height="130%">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <clipPath id="moonclip">
+      <circle cx="100" cy="100" r="82"/>
+    </clipPath>
   </defs>
-  <!-- outer halo -->
-  <circle cx="100" cy="100" r="85" fill="rgba(252,220,80,.12)" filter="url(#mhalo)"/>
-  <!-- moon crescent body -->
-  <path d="M100 18 A82 82 0 1 1 100 182 A52 52 0 1 0 100 18Z" fill="url(#mg1)" filter="url(#mgl)"/>
-  <path d="M100 18 A82 82 0 1 1 100 182 A52 52 0 1 0 100 18Z" fill="url(#mg2)"/>
-  <!-- surface texture -->
-  <circle cx="80" cy="70" r="10" fill="#d09828" opacity=".22"/>
-  <circle cx="130" cy="110" r="7" fill="#d09828" opacity=".18"/>
-  <circle cx="88" cy="140" r="5" fill="#d09828" opacity=".15"/>
-  <circle cx="118" cy="65" r="4" fill="#d09828" opacity=".15"/>
-  <!-- sheen highlight -->
-  <ellipse cx="85" cy="52" rx="20" ry="12" fill="rgba(255,255,200,.3)" transform="rotate(-30 85 52)"/>
-  <!-- outer sparkles -->
-  <path d="M160 42 l3 6 6 3-6 3-3 6-3-6-6-3 6-3z" fill="#fce890" opacity=".9"/>
-  <path d="M26 64 l2 4 4 2-4 2-2 4-2-4-4-2 4-2z" fill="#fce890" opacity=".7"/>
-  <path d="M172 148 l1.8 3.5 3.5 1.8-3.5 1.8-1.8 3.5-1.8-3.5-3.5-1.8 3.5-1.8z" fill="#fce890" opacity=".8"/>
-  <path d="M40 148 l1.2 2.4 2.4 1.2-2.4 1.2-1.2 2.4-1.2-2.4-2.4-1.2 2.4-1.2z" fill="#fce890" opacity=".5"/>
+
+  <!-- outer atmosphere halo -->
+  <circle cx="100" cy="100" r="90" fill="rgba(252,220,80,.13)" filter="url(#mhalo)"/>
+
+  <!-- sphere base -->
+  <circle cx="100" cy="100" r="82" fill="url(#mg-sphere)" filter="url(#msoft)"/>
+
+  <!-- crater details clipped to sphere -->
+  <g clip-path="url(#moonclip)">
+    <!-- large crater top-left area -->
+    <circle cx="72"  cy="68"  r="13" fill="#b87c08" opacity=".28" filter="url(#mcrat)"/>
+    <circle cx="72"  cy="68"  r="10" fill="#9a6400" opacity=".22"/>
+    <ellipse cx="68" cy="65"  rx="4" ry="2.5" fill="rgba(255,240,160,.35)" transform="rotate(-20 68 65)"/>
+
+    <!-- medium crater right -->
+    <circle cx="132" cy="105" r="9"  fill="#9a6400" opacity=".25" filter="url(#mcrat)"/>
+    <circle cx="132" cy="105" r="6.5" fill="#7a5000" opacity=".2"/>
+    <ellipse cx="129" cy="102" rx="2.5" ry="1.5" fill="rgba(255,240,160,.3)" transform="rotate(-15 129 102)"/>
+
+    <!-- small craters -->
+    <circle cx="88"  cy="135" r="6"  fill="#9a6400" opacity=".2" filter="url(#mcrat)"/>
+    <circle cx="88"  cy="135" r="4"  fill="#7a5000" opacity=".18"/>
+    <circle cx="118" cy="62"  r="5"  fill="#9a6400" opacity=".18" filter="url(#mcrat)"/>
+    <circle cx="118" cy="62"  r="3.5" fill="#7a5000" opacity=".15"/>
+    <circle cx="55"  cy="110" r="4"  fill="#9a6400" opacity=".16" filter="url(#mcrat)"/>
+    <circle cx="148" cy="75"  r="3"  fill="#9a6400" opacity=".15" filter="url(#mcrat)"/>
+    <circle cx="110" cy="148" r="4.5" fill="#9a6400" opacity=".18" filter="url(#mcrat)"/>
+
+    <!-- mare (dark flat region) -->
+    <ellipse cx="108" cy="118" rx="28" ry="20" fill="#8a5c00" opacity=".18" filter="url(#mcrat)"/>
+
+    <!-- terminator (dark side shadow) -->
+    <circle cx="100" cy="100" r="82" fill="url(#mg-shadow)"/>
+
+    <!-- rim atmospheric light (blue edge glow on shadow side) -->
+    <circle cx="100" cy="100" r="82" fill="url(#mg-rim)"/>
+
+    <!-- specular highlight -->
+    <circle cx="100" cy="100" r="82" fill="url(#mg-spec)"/>
+  </g>
+
+  <!-- atmosphere glow ring -->
+  <circle cx="100" cy="100" r="82" fill="none" stroke="rgba(252,220,80,.22)" stroke-width="3"/>
+  <circle cx="100" cy="100" r="88" fill="url(#mg-atm)"/>
+
+  <!-- sparkles outside -->
+  <path d="M163 38 l3 6 6 3-6 3-3 6-3-6-6-3 6-3z" fill="#fce890" opacity=".95"/>
+  <path d="M24 60  l2 4 4 2-4 2-2 4-2-4-4-2 4-2z"  fill="#fce890" opacity=".75"/>
+  <path d="M175 150 l1.8 3.5 3.5 1.8-3.5 1.8-1.8 3.5-1.8-3.5-3.5-1.8 3.5-1.8z" fill="#fce890" opacity=".85"/>
+  <path d="M38 148 l1.2 2.4 2.4 1.2-2.4 1.2-1.2 2.4-1.2-2.4-2.4-1.2 2.4-1.2z"  fill="#fce890" opacity=".55"/>
 </symbol>
 
 <!-- ═ REDESIGNED CRESCENT — slim and elegant ═ -->
@@ -838,6 +908,15 @@ function enterSite(){
     document.getElementById('intro').style.display='none';
     document.getElementById('main').classList.add('visible');
     loadQR();startShootingStars();
+    // autoplay music
+    if(!mAudio){
+      mAudio=new Audio('https://github.com/user-attachments/files/27298573/Tomas.Kovacs.Terry.Joiner.-.Bundle.of.Joy.From.Inside.Out.mp3');
+      mAudio.loop=true;mAudio.volume=0.35;
+    }
+    mAudio.play().then(()=>{
+      mOn=true;
+      document.getElementById('musicUI').classList.remove('paused');
+    }).catch(()=>{});
     // show RSVP reminder toast after delay
     setTimeout(showToast, 4000);
     // show again periodically if not dismissed
@@ -899,12 +978,61 @@ const revObs=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isInters
 document.querySelectorAll('.sr').forEach(r=>revObs.observe(r));
 
 /* ── PARALLAX ── */
-window.addEventListener('scroll',()=>{
-  const y=window.scrollY;
-  const hm=document.querySelector('.h-moon'),hb=document.querySelector('.h-bear');
-  if(hm)hm.style.transform=`translateY(${y*.1}px)`;
-  if(hb)hb.style.transform=`translateY(${y*.07}px)`;
-});
+(()=>{
+  let ticking=false;
+  const layers=[
+    {sel:'.h-moon',     speed:0.18, rot:true,  rotAmt:0.012},
+    {sel:'.png-bear-left',  speed:0.06},
+    {sel:'.png-bear-right', speed:0.06},
+    {sel:'.float-el',   speed:0.22, multi:true},
+    {sel:'.moon-banner',speed:0.08},
+  ];
+  // cache elements
+  const els=layers.map(l=>({
+    ...l,
+    nodes: l.multi ? [...document.querySelectorAll(l.sel)] : [document.querySelector(l.sel)]
+  }));
+
+  // mouse parallax for hero moon
+  const hero=document.getElementById('sec-hero');
+  let mx=0,my=0;
+  document.addEventListener('mousemove',e=>{
+    mx=(e.clientX/window.innerWidth -.5)*2;
+    my=(e.clientY/window.innerHeight-.5)*2;
+  });
+
+  function applyParallax(){
+    const y=window.scrollY;
+    els.forEach(({nodes,speed,rot,rotAmt})=>{
+      nodes.forEach((n,i)=>{
+        if(!n)return;
+        const offset=y*speed*(i%2===0?1:0.85);
+        const r=rot? `rotate(${y*rotAmt}deg)` : '';
+        n.style.transform=(n.classList.contains('png-bear-right')
+          ? `scaleX(-1) translateY(${offset}px)`
+          : `translateY(${offset}px) ${r}`);
+      });
+    });
+
+    // hero moon subtle mouse parallax
+    const hm=document.querySelector('.h-moon');
+    if(hm && y<window.innerHeight){
+      const parallaxY=y*0.18;
+      hm.style.transform=`translateY(${parallaxY + my*12}px) translateX(${mx*8}px) rotate(${y*0.012}deg)`;
+    }
+    ticking=false;
+  }
+
+  window.addEventListener('scroll',()=>{if(!ticking){requestAnimationFrame(applyParallax);ticking=true;}});
+
+  // floating ambient elements get staggered parallax depth
+  document.querySelectorAll('.float-el').forEach((el,i)=>{
+    const depth=0.06+i*0.04;
+    window.addEventListener('scroll',()=>{
+      el.style.transform=`translateY(${window.scrollY*depth}px)`;
+    },{passive:true});
+  });
+})();
 
 /* ── ATTEND SELECT ── */
 let attendVal='yes';
